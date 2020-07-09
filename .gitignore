@@ -1,0 +1,12 @@
+node_modules
+.idea
+api
+
+dist
+coverage
+
+lerna-debug.log
+yarn-error.log
+
+.coveralls.yml
+.travis.yml
