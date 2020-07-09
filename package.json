@@ -1,5 +1,5 @@
 {
-  "name": "gaws",
+  "name": "reggaws",
   "version": "0.0.1",
   "main": "index.ts",
   "module": "dist/index.esm.js",
@@ -15,7 +15,6 @@
   },
   "files": [
     "src",
-    "api",
     "dist"
   ],
   "lint-staged": {
@@ -55,6 +54,6 @@
     "webpack-dev-server": "^3.11.0"
   },
   "publishConfig": {
-    "registry": "http://172.23.40.188:7001"
+    "registry": "https://registry.npmjs.org/"
   }
 }
