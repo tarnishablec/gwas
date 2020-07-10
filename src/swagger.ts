@@ -14,7 +14,7 @@ export const methods: [
 
 export type Method = UnionToTuple<typeof methods>
 
-export type MapView = Map<
+export type MapView = Record<
   string,
   Record<string, Partial<Record<Method, swagger.Operation>>>
 >
@@ -40,14 +40,14 @@ export class SwaggerSource implements Source {
   formatDataPaths() {
     if (!this.raw) throw new Error('empty source data')
     const { paths } = this.raw
-    const res: MapView = new Map()
+    const res: MapView = {}
     for (const url in paths) {
       const entry = paths[url]
       for (const met in entry) {
         if (!(methods as string[]).includes(met)) continue
         const meth = met as Method
         const tag = (entry[meth] as swagger.Operation).tags?.[0] ?? ''
-        const m = res.get(tag) ?? res.set(tag, {}).get(tag)!
+        const m = res[tag] ?? (res[tag] = {})
         const mm = m[url] ?? (m[url] = {})
         mm[meth] = entry[meth]
       }
@@ -85,7 +85,7 @@ export class SwaggerSource implements Source {
   }
 
   queryPaths(controllerName: string) {
-    return this.data?.get(controllerName)
+    return this.data ? Reflect.get(this.data, controllerName) : undefined
   }
 
   queryDetail(controllerName: string, url: string, method: Method) {
