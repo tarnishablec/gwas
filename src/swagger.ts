@@ -1,4 +1,4 @@
-import { ab2str, Obj, UnionToTuple } from './utils'
+import { ab2str, Obj, UnionToTuple, isObject } from './utils'
 import * as swagger from 'swagger-schema-official'
 import { Source } from './source'
 
@@ -115,8 +115,7 @@ export class SwaggerSource implements Source {
               const self = this
               return function (this: Map<unknown, unknown>, key: unknown) {
                 const result = this.get(key)
-                if (result instanceof Object && !(result instanceof Function))
-                  return self.createProxy(result)
+                if (isObject(result)) return self.createProxy(result)
                 return result
               }.bind(target as Map<unknown, unknown>)
             }
@@ -136,8 +135,7 @@ export class SwaggerSource implements Source {
           return this.createProxy(this.resolveRef(result.$ref))
 
         if (p === '__raw__') return target
-        if (result instanceof Object && !(result instanceof Function))
-          return this.createProxy(result)
+        if (isObject(result)) return this.createProxy(result)
         return result
       }
     })

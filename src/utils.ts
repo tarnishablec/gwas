@@ -9,3 +9,7 @@ export function ab2str(buf: ArrayBuffer) {
 export function keysOf<T>(val: T) {
   return Object.keys(val) as Array<keyof T>
 }
+
+export function isObject<T = object>(target: unknown): target is T & object {
+  return target !== null && typeof target === 'object'
+}
