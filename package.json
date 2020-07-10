@@ -8,16 +8,16 @@
     "build": "rollup -c"
   },
   "types": "dist/index.esm.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
   "license": "MIT",
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
     }
   },
-  "files": [
-    "src",
-    "dist"
-  ],
   "lint-staged": {
     "*.{js,ts,tsx}": [
       "eslint --fix",
