@@ -20,6 +20,7 @@ export type MapView = Record<
 >
 
 export class SwaggerSource implements Source {
+  mode: 'runtime' | 'compile' = 'compile'
   data?: MapView
   raw?: swagger.Spec
 
@@ -106,34 +107,28 @@ export class SwaggerSource implements Source {
   }
 
   protected createProxy<T extends object>(raw: T): T {
-    if (([Map, Set] as Array<Function>).includes(raw.constructor))
-      return new Proxy(raw, {
-        get: (target, prop, receiver) => {
-          const result = Reflect.get(target, prop, receiver)
-          if (result instanceof Function) {
-            if (prop === 'get') {
-              const self = this
-              return function (this: Map<unknown, unknown>, key: unknown) {
-                const result = this.get(key)
-                if (isObject(result)) return self.createProxy(result)
-                return result
-              }.bind(target as Map<unknown, unknown>)
-            }
-            return result.bind(target)
-          }
-          return result
-        }
-      })
+    // if (([Map, Set] as Array<Function>).includes(raw.constructor))
+    //   return new Proxy(raw, {
+    //     get: (target, prop, receiver) => {
+    //       const result = Reflect.get(target, prop, receiver)
+    //       if (result instanceof Function) {
+    //         if (prop === 'get') {
+    //           const self = this
+    //           return function (this: Map<unknown, unknown>, key: unknown) {
+    //             const result = this.get(key)
+    //             if (isObject(result)) return self.createProxy(result)
+    //             return result
+    //           }.bind(target as Map<unknown, unknown>)
+    //         }
+    //         return result.bind(target)
+    //       }
+    //       return result
+    //     }
+    //   })
     return new Proxy(raw, {
       get: (target, p, receiver) => {
         const result = Reflect.get(target, p, receiver)
-        if (
-          ['schema', 'result', 'items'].includes(p as string) &&
-          Object.keys(result).length === 1 &&
-          '$ref' in result
-        )
-          return this.createProxy(this.resolveRef(result.$ref))
-
+        if (p === '$ref') return this.createProxy(this.resolveRef(result))
         if (p === '__raw__') return target
         if (isObject(result)) return this.createProxy(result)
         return result

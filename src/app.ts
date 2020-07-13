@@ -22,11 +22,7 @@ component('app-root', function (this: ReactiveElement) {
   const [urls] = useMemo(() => {
     console.log(state.controller)
     return state.swagger
-      ? keysOf(
-          state.swagger.source.queryPaths(
-            state.controller ?? ''
-          ) ?? {}
-        )
+      ? keysOf(state.swagger.source.queryPaths(state.controller ?? '') ?? {})
       : []
   }, [state.controller, state.swagger?.source])
 
@@ -101,6 +97,7 @@ component('app-root', function (this: ReactiveElement) {
         const source = state.swagger.source
         const result = source.queryDetail(controller, url, method)
         state.queryResult = result
+        let r = result?.parameters?.[0]
       }}"
     >
       query
