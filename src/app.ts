@@ -39,7 +39,7 @@ component('app-root', function (this: ReactiveElement) {
             const swag = new SwaggerSource()
             const file = input.files[i]
             const { name: filename } = file
-            await swag.loadFile(file)
+            await swag.init(file)
             swags.push({ filename, source: swag })
           }
           state.swagger = swags[0]
@@ -97,7 +97,6 @@ component('app-root', function (this: ReactiveElement) {
         const source = state.swagger.source
         const result = source.queryDetail(controller, url, method)
         state.queryResult = result
-        let r = result?.parameters?.[0]
       }}"
     >
       query

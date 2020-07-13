@@ -1,4 +1,4 @@
-import { ab2str, Obj, UnionToTuple, isObject } from './utils'
+import { ab2str, Obj, UnionToTuple, isObject, forceGet } from './utils'
 import * as swagger from 'swagger-schema-official'
 import { Source } from './source'
 
@@ -12,6 +12,8 @@ export const methods: [
   'head'
 ] = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head']
 
+const rawProxyMap = new WeakMap()
+
 export type Method = UnionToTuple<typeof methods>
 
 export type MapView = Record<
@@ -23,6 +25,7 @@ export class SwaggerSource implements Source {
   mode: 'runtime' | 'compile' = 'compile'
   data?: MapView
   raw?: swagger.Spec
+  definitions?: swagger.Spec['definitions']
 
   static TypeMap = {
     int32: Number,
@@ -56,29 +59,32 @@ export class SwaggerSource implements Source {
     return this.createProxy(res)
   }
 
-  async loadUrl(url: string) {
-    const res = await fetch(url)
-    this.raw = (res as unknown) as swagger.Spec
-    this.data = this.formatDataPaths()
-  }
-
-  loadFile(file: File) {
-    const reader = new FileReader()
-    return new Promise((resolve, reject) => {
-      reader.onload = (e) => {
-        const result = e.target?.result
-        !result
-          ? resolve(undefined)
-          : resolve(
-              (this.raw = JSON.parse(
-                typeof result === 'string' ? result : ab2str(result)
-              ))
+  async init(source: File): Promise<void>
+  async init(source: string): Promise<void>
+  async init(source: string | File) {
+    if (source instanceof File) {
+      const reader = new FileReader()
+      return new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          const result = e.target?.result
+          if (result) {
+            this.raw = JSON.parse(
+              typeof result === 'string' ? result : ab2str(result)
             )
-        this.data = this.formatDataPaths()
-      }
-      reader.onerror = (err) => reject(err)
-      reader.readAsText(file)
-    })
+            this.definitions = this.raw?.definitions
+          }
+          resolve()
+          this.data = this.formatDataPaths()
+        }
+        reader.onerror = (err) => reject(err)
+        reader.readAsText(source)
+      })
+    } else {
+      const res = await fetch(source)
+      this.raw = (res as unknown) as swagger.Spec
+      this.definitions = this.raw.definitions
+      this.data = this.formatDataPaths()
+    }
   }
 
   queryControllers() {
@@ -96,9 +102,9 @@ export class SwaggerSource implements Source {
     return { parameters, responses, summary }
   }
 
-  resolveRef(ref: string) {
-    const arr = ref.split('/').slice(1)
-    let res = (this.raw as unknown) as Obj
+  resolveRef(ref: string, definitions = this.raw?.definitions) {
+    const arr = ref.split('/').slice(2)
+    let res = definitions as Obj
     while (arr.length) {
       const loc = arr.shift()!
       res = res[loc] as Obj
@@ -128,9 +134,13 @@ export class SwaggerSource implements Source {
     return new Proxy(raw, {
       get: (target, p, receiver) => {
         const result = Reflect.get(target, p, receiver)
-        if (p === '$ref') return this.createProxy(this.resolveRef(result))
+        if (p === '$ref') {
+          const r = this.resolveRef(result)
+          return forceGet(rawProxyMap, r, this.createProxy(r))
+        }
         if (p === '__raw__') return target
-        if (isObject(result)) return this.createProxy(result)
+        if (isObject(result))
+          return forceGet(rawProxyMap, result, this.createProxy(result))
         return result
       }
     })

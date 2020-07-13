@@ -26,7 +26,7 @@
     ]
   },
   "eslintIgnore": [
-    "packages/*/dist/*"
+    "dist"
   ],
   "devDependencies": {
     "@gallop/gallop": "^0.9.14",
