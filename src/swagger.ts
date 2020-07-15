@@ -61,7 +61,8 @@ export class SwaggerSource implements Source {
 
   async init(source: File): Promise<void>
   async init(source: string): Promise<void>
-  async init(source: string | File) {
+  async init(source: swagger.Spec): Promise<void>
+  async init(source: string | File | swagger.Spec) {
     if (source instanceof File) {
       const reader = new FileReader()
       return new Promise((resolve, reject) => {
@@ -79,9 +80,13 @@ export class SwaggerSource implements Source {
         reader.onerror = (err) => reject(err)
         reader.readAsText(source)
       })
-    } else {
+    } else if (typeof source === 'string') {
       const res = await fetch(source)
       this.raw = (res as unknown) as swagger.Spec
+      this.definitions = this.raw.definitions
+      this.data = this.formatDataPaths()
+    } else {
+      this.raw = source
       this.definitions = this.raw.definitions
       this.data = this.formatDataPaths()
     }
@@ -112,7 +117,7 @@ export class SwaggerSource implements Source {
     return res
   }
 
-  protected createProxy<T extends object>(raw: T): T {
+  createProxy<T extends object>(raw: T): T {
     // if (([Map, Set] as Array<Function>).includes(raw.constructor))
     //   return new Proxy(raw, {
     //     get: (target, prop, receiver) => {

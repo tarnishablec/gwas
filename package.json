@@ -1,6 +1,6 @@
 {
   "name": "reggaws",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "main": "index.ts",
   "module": "dist/index.esm.js",
   "scripts": {
@@ -31,7 +31,6 @@
   "devDependencies": {
     "@gallop/gallop": "^0.9.14",
     "@rollup/plugin-json": "^4.1.0",
-    "@types/swagger-schema-official": "^2.0.21",
     "@typescript-eslint/eslint-plugin": "^3.5.0",
     "@typescript-eslint/parser": "^3.5.0",
     "@wessberg/rollup-plugin-ts": "^1.2.27",
@@ -53,6 +52,9 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0"
+  },
+  "peerDependencies": {
+    "@types/swagger-schema-official": "^2.0.21"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
