@@ -56,7 +56,7 @@ export class SwaggerSource implements Source {
         mm[meth] = entry[meth]
       }
     }
-    return this.createProxy(res)
+    return SwaggerSource.createProxy(res, this.definitions)
   }
 
   async init(source: File): Promise<void>
@@ -107,7 +107,7 @@ export class SwaggerSource implements Source {
     return { parameters, responses, summary }
   }
 
-  resolveRef(ref: string, definitions = this.raw?.definitions) {
+  static resolveRef(ref: string, definitions: swagger.Spec['definitions']) {
     const arr = ref.split('/').slice(2)
     let res = definitions as Obj
     while (arr.length) {
@@ -117,7 +117,10 @@ export class SwaggerSource implements Source {
     return res
   }
 
-  createProxy<T extends object>(raw: T): T {
+  static createProxy<T extends object>(
+    raw: T,
+    definitions: swagger.Spec['definitions']
+  ): T {
     // if (([Map, Set] as Array<Function>).includes(raw.constructor))
     //   return new Proxy(raw, {
     //     get: (target, prop, receiver) => {
@@ -140,12 +143,16 @@ export class SwaggerSource implements Source {
       get: (target, p, receiver) => {
         const result = Reflect.get(target, p, receiver)
         if (p === '$ref') {
-          const r = this.resolveRef(result)
-          return forceGet(rawProxyMap, r, this.createProxy(r))
+          const r = SwaggerSource.resolveRef(result, definitions)
+          return forceGet(rawProxyMap, r, this.createProxy(r, definitions))
         }
         if (p === '__raw__') return target
         if (isObject(result))
-          return forceGet(rawProxyMap, result, this.createProxy(result))
+          return forceGet(
+            rawProxyMap,
+            result,
+            this.createProxy(result, definitions)
+          )
         return result
       }
     })
